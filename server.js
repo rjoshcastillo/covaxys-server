@@ -22,31 +22,35 @@ db.connect((error) => {
 });
 
 app.get("/", async (req, res) => {
-  res.send("Welcome to covaxys API");
+  res.send("Welcome to SkinScan API");
 });
 
 //ENDPOINT FOR GETTING ALL DISEASES
 app.get("/api/get-diseases", async (req, res) => {
-  await db
-    .promise()
-    .query("SELECT * FROM diseases")
-    .then((result) => {
-      res.send(result[0]);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).json({
-        message: "Internal Server Error",
-        error: err.message,
-      });
+
+  try {
+    const [rows] = await db
+      .promise()
+      .query("SELECT * FROM diseases");
+
+    if (rows.length > 0) {
+      res.json(rows);
+    } else {
+      res.json({ message: "Empty record", statusCode: 404 });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
     });
+  }
 });
 
 //ENDPOINT FOR SEARCHING DISEASES BY NAME
 //http://localhost:3000/api/get-disease?name=Eczema
 app.get("/api/get-disease", async (req, res) => {
   const diseaseName = req.query.name;
-  console.log("Search term:", diseaseName);
 
   try {
     const [rows] = await db
@@ -58,7 +62,7 @@ app.get("/api/get-disease", async (req, res) => {
     if (rows.length > 0) {
       res.json(rows);
     } else {
-      res.status(404).json({ message: "Disease not found" });
+      res.json({ message: "Disease not found", statusCode: 404 });
     }
   } catch (err) {
     console.error(err);
